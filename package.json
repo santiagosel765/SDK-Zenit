@@ -1,0 +1,33 @@
+{
+  "name": "zenit-sdk",
+  "version": "0.0.1",
+  "description": "TypeScript SDK for interacting with the Zenit backend APIs.",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.ts --dts --format esm,cjs",
+    "dev": "tsup src/index.ts --dts --format esm,cjs --watch",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "zenit",
+    "sdk",
+    "typescript",
+    "react"
+  ],
+  "author": "",
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "peerDependencies": {
+    "react": "^18.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "react": "^18.0.0"
+  }
+}
