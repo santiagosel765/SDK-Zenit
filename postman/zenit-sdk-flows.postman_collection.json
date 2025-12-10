@@ -1,0 +1,252 @@
+{
+  "info": {
+    "name": "Zenit SDK – Flujos principales",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000/api/v1", "type": "string" },
+    { "key": "email", "value": "", "type": "string" },
+    { "key": "password", "value": "", "type": "string" },
+    { "key": "sdkToken", "value": "", "type": "string" },
+    { "key": "accessToken", "value": "", "type": "string" },
+    { "key": "refreshToken", "value": "", "type": "string" },
+    { "key": "sdkAccessToken", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Flujo 1 – Login de usuario y sesión",
+      "item": [
+        {
+          "name": "1. Login usuario (SDK usa auth.login)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Este request emula lo que hace `client.auth.login` en el SDK. Envía las credenciales y devuelve tokens de acceso/refresh."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('Login OK', function() {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.collectionVariables.set('accessToken', json.accessToken);",
+                  "pm.collectionVariables.set('refreshToken', json.refreshToken);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Me (SDK usa auth.me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "Este request emula `client.auth.me` en el SDK usando el access token guardado."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Me 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Validate (SDK usa auth.validate)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/validate",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "validate"]
+            },
+            "description": "Simula `client.auth.validate` verificando que el token JWT siga siendo válido."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('Validate OK', function () {",
+                  "  pm.expect(json.valid).to.eql(true);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. Refresh (SDK usa auth.refresh)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{refreshToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            },
+            "description": "Reproduce `client.auth.refresh` para obtener nuevos tokens usando el refresh token."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('accessToken', json.accessToken);",
+                  "pm.collectionVariables.set('refreshToken', json.refreshToken);",
+                  "pm.test('Refresh OK', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Flujo 2 – Token SDK → JWT → Me",
+      "item": [
+        {
+          "name": "1. Validar token SDK (SDK usa sdkAuth.validateSdkToken)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{sdkToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sdk-auth/validate",
+              "host": ["{{baseUrl}}"],
+              "path": ["sdk-auth", "validate"]
+            },
+            "description": "Emula `client.sdkAuth.validateSdkToken` para comprobar si el token de SDK sigue activo."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('SDK token válido', function () {",
+                  "  pm.expect(json.valid).to.eql(true);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Intercambiar token SDK por JWT (SDK usa sdkAuth.exchangeSdkToken)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{sdkToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sdk-auth/exchange",
+              "host": ["{{baseUrl}}"],
+              "path": ["sdk-auth", "exchange"]
+            },
+            "description": "Equivalente a `client.sdkAuth.exchangeSdkToken`. Devuelve un JWT que el SDK usa como access token."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('sdkAccessToken', json.accessToken);",
+                  "pm.test('Intercambio OK', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Me usando sdkAccessToken (SDK usa auth.me luego de exchange)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{sdkAccessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "Este request refleja el paso posterior a `sdkAuth.exchangeSdkToken`, cuando el SDK llama a `client.auth.me` con el JWT recibido."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Me con sdkAccessToken 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
