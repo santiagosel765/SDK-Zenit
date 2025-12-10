@@ -30,8 +30,10 @@ export class ZenitAuthClient {
   }
 
   async refresh(refreshToken?: string): Promise<RefreshResponse> {
+    // Zenit allows refresh via httpOnly cookie or Authorization header; the SDK uses the header when a token is available.
     const tokenToUse = refreshToken || this.config.refreshToken;
-    const response = await this.http.post<RefreshResponse>('/auth/refresh', { refreshToken: tokenToUse });
+    const headers = tokenToUse ? { Authorization: `Bearer ${tokenToUse}` } : undefined;
+    const response = await this.http.post<RefreshResponse>('/auth/refresh', undefined, { headers });
     this.updateTokens({ accessToken: response.accessToken, refreshToken: response.refreshToken });
     return response;
   }
