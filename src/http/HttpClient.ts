@@ -18,6 +18,8 @@ export interface HttpClientOptions {
 /**
  * Minimal fetch-based HTTP client for the Zenit SDK.
  * Responsible for setting base URL, auth headers and error normalization.
+ * Usa Authorization para JWT de usuario o el JWT obtenido tras /sdk-auth/exchange y X-SDK-Token
+ * solo cuando se debe enviar el token SDK crudo a endpoints como /sdk-auth/validate o /sdk-auth/exchange.
  */
 export class HttpClient {
   private readonly baseUrl: string;
