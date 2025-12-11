@@ -31,7 +31,8 @@ export class ZenitClient {
     this.sdkToken = config.sdkToken;
     this.httpClient = new HttpClient({
       baseUrl: config.baseUrl,
-      resolveTokens: () => ({ accessToken: this.accessToken, sdkToken: this.sdkToken })
+      resolveTokens: () => ({ accessToken: this.accessToken, sdkToken: this.sdkToken }),
+      resolveAuthorizationHeader: this.getAuthorizationHeader.bind(this)
     });
 
     this.auth = new ZenitAuthClient(this.httpClient, this.updateTokens.bind(this), config);
@@ -47,12 +48,10 @@ export class ZenitClient {
    */
   private updateTokens(tokens: { accessToken?: string; refreshToken?: string }) {
     if (tokens.accessToken) {
-      this.accessToken = tokens.accessToken;
-      this.config.accessToken = tokens.accessToken;
+      this.setAccessToken(tokens.accessToken);
     }
     if (tokens.refreshToken) {
-      this.refreshToken = tokens.refreshToken;
-      this.config.refreshToken = tokens.refreshToken;
+      this.setRefreshToken(tokens.refreshToken);
     }
     this.config.onTokenRefreshed?.({
       accessToken: this.accessToken || '',
@@ -63,9 +62,28 @@ export class ZenitClient {
   // Se usa cuando /sdk-auth/exchange devuelve un accessToken; pasa a ser el accessToken principal del SDK.
   private updateAccessTokenFromSdkExchange(token?: string) {
     if (token) {
-      this.accessToken = token;
-      this.config.accessToken = token;
+      this.setAccessToken(token);
     }
+  }
+
+  setAccessToken(token: string) {
+    this.accessToken = token;
+    this.config.accessToken = token;
+  }
+
+  setRefreshToken(token: string) {
+    this.refreshToken = token;
+    this.config.refreshToken = token;
+  }
+
+  getAuthorizationHeader(): Record<string, string> {
+    const header: Record<string, string> = {};
+
+    if (this.accessToken) {
+      header.Authorization = `Bearer ${this.accessToken}`;
+    }
+
+    return header;
   }
 
   getHttpClient(): HttpClient {

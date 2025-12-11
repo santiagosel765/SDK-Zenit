@@ -9,13 +9,13 @@ async function main() {
 
   try {
     const validation = await client.sdkAuth.validateSdkToken();
-    console.log('SDK validate:', validation);
+    console.log('validateSdkToken OK');
 
     const exchange = await client.sdkAuth.exchangeSdkToken();
-    console.log('SDK exchange:', exchange);
+    console.log('exchangeSdkToken OK');
 
     const me = await client.auth.me();
-    console.log('Me with SDK-based access token:', me);
+    console.log('me() OK usando el token del SDK');
   } catch (error) {
     const sdkError = error as ZenitSdkError;
     console.error('Zenit SDK error:', sdkError);

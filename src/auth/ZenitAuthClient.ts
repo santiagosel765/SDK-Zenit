@@ -21,7 +21,9 @@ export class ZenitAuthClient {
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     try {
       const response = await this.http.post<LoginResponse>('/auth/login', credentials);
-      this.updateTokens({ accessToken: response.accessToken, refreshToken: response.refreshToken });
+      const accessToken = (response as any)?.accessToken ?? (response as any)?.data?.accessToken;
+      const refreshToken = (response as any)?.refreshToken ?? (response as any)?.data?.refreshToken;
+      this.updateTokens({ accessToken, refreshToken });
       return response;
     } catch (error) {
       this.config.onAuthError?.(error as any);
@@ -34,7 +36,9 @@ export class ZenitAuthClient {
     const tokenToUse = refreshToken || this.config.refreshToken;
     const headers = tokenToUse ? { Authorization: `Bearer ${tokenToUse}` } : undefined;
     const response = await this.http.post<RefreshResponse>('/auth/refresh', undefined, { headers });
-    this.updateTokens({ accessToken: response.accessToken, refreshToken: response.refreshToken });
+    const accessToken = (response as any)?.accessToken ?? (response as any)?.data?.accessToken;
+    const nextRefreshToken = (response as any)?.refreshToken ?? (response as any)?.data?.refreshToken;
+    this.updateTokens({ accessToken, refreshToken: nextRefreshToken });
     return response;
   }
 
