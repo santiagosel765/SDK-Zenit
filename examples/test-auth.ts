@@ -2,11 +2,14 @@ import { ZenitClient, ZenitSdkError } from '../src';
 
 async function main() {
   const client = new ZenitClient({
-    baseUrl: '<BASE_URL>'
+    baseUrl: 'http://localhost:3200/api/v1',
   });
 
   try {
-    const login = await client.auth.login({ email: '<EMAIL>', password: '<PASSWORD>' });
+    const login = await client.auth.login({
+      email: 'japu@genesisempresarial.com',
+      password: 'password123',
+    });
     console.log('Login:', login);
 
     const me = await client.auth.me();
@@ -19,11 +22,7 @@ async function main() {
     console.log('Refreshed:', refreshed);
   } catch (error) {
     const sdkError = error as ZenitSdkError;
-    if (sdkError && typeof sdkError.status !== 'undefined') {
-      console.error('Zenit SDK error:', sdkError);
-    } else {
-      console.error('Unexpected error:', error);
-    }
+    console.error('Zenit SDK error:', sdkError);
   }
 }
 
