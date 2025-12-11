@@ -18,8 +18,10 @@ export interface HttpClientOptions {
 /**
  * Minimal fetch-based HTTP client for the Zenit SDK.
  * Responsible for setting base URL, auth headers and error normalization.
- * Usa Authorization para JWT de usuario o el JWT obtenido tras /sdk-auth/exchange y X-SDK-Token
- * solo cuando se debe enviar el token SDK crudo a endpoints como /sdk-auth/validate o /sdk-auth/exchange.
+ *
+ * - El header `Authorization` se usa para JWT de usuario o JWT obtenido vía `/sdk-auth/exchange`.
+ * - El header `X-SDK-Token` se usa para enviar el token SDK crudo a endpoints como
+ *   `/sdk-auth/validate` y `/sdk-auth/exchange`.
  */
 export class HttpClient {
   private readonly baseUrl: string;
@@ -35,32 +37,44 @@ export class HttpClient {
   }
 
   async post<T>(path: string, body?: unknown, options: RequestInit = {}): Promise<T> {
-    const headers: HeadersInit = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(options.headers as Record<string, string> | undefined),
+    };
+
     return this.request<T>(path, {
       ...options,
       method: 'POST',
       headers,
-      body: body !== undefined ? JSON.stringify(body) : undefined
+      body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   }
 
   async put<T>(path: string, body?: unknown, options: RequestInit = {}): Promise<T> {
-    const headers: HeadersInit = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(options.headers as Record<string, string> | undefined),
+    };
+
     return this.request<T>(path, {
       ...options,
       method: 'PUT',
       headers,
-      body: body !== undefined ? JSON.stringify(body) : undefined
+      body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   }
 
   async patch<T>(path: string, body?: unknown, options: RequestInit = {}): Promise<T> {
-    const headers: HeadersInit = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(options.headers as Record<string, string> | undefined),
+    };
+
     return this.request<T>(path, {
       ...options,
       method: 'PATCH',
       headers,
-      body: body !== undefined ? JSON.stringify(body) : undefined
+      body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   }
 
@@ -71,8 +85,10 @@ export class HttpClient {
   private async request<T>(path: string, options: RequestInit): Promise<T> {
     const url = `${this.baseUrl}${path}`;
     const tokenState = this.resolveTokens();
-    const headers: HeadersInit = {
-      ...(options.headers || {})
+
+    // Usamos Record<string, string> para que TypeScript permita indexar con 'Authorization' y 'X-SDK-Token'
+    const headers: Record<string, string> = {
+      ...(options.headers as Record<string, string> | undefined),
     };
 
     if (tokenState.accessToken) {
@@ -83,7 +99,10 @@ export class HttpClient {
       headers['X-SDK-Token'] = tokenState.sdkToken;
     }
 
-    const response = await fetch(url, { ...options, headers });
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
 
     const contentType = response.headers.get('content-type');
     const isJson = contentType?.includes('application/json');
@@ -97,7 +116,7 @@ export class HttpClient {
         timestamp: typeof payload === 'object' ? payload.timestamp : undefined,
         path: typeof payload === 'object' ? payload.path : undefined,
         method: typeof payload === 'object' ? payload.method : undefined,
-        error: typeof payload === 'object' ? payload.error : undefined
+        error: typeof payload === 'object' ? payload.error : undefined,
       };
       throw normalizedError;
     }

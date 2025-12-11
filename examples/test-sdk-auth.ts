@@ -2,8 +2,9 @@ import { ZenitClient, ZenitSdkError } from '../src';
 
 async function main() {
   const client = new ZenitClient({
-    baseUrl: '<BASE_URL>',
-    sdkToken: '<SDK_TOKEN>'
+    baseUrl: 'http://localhost:3200/api/v1',
+    sdkToken:
+      'znt_53402211aa63cffab2d5a39f3010087f77172f7d70a2ca8a0aa23ed374478d22',
   });
 
   try {
@@ -17,11 +18,7 @@ async function main() {
     console.log('Me with SDK-based access token:', me);
   } catch (error) {
     const sdkError = error as ZenitSdkError;
-    if (sdkError && typeof sdkError.status !== 'undefined') {
-      console.error('Zenit SDK error:', sdkError);
-    } else {
-      console.error('Unexpected error:', error);
-    }
+    console.error('Zenit SDK error:', sdkError);
   }
 }
 
