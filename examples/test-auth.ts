@@ -10,16 +10,16 @@ async function main() {
       email: 'japu@genesisempresarial.com',
       password: 'password123',
     });
-    console.log('Login:', login);
+    console.log('Login OK');
 
     const me = await client.auth.me();
-    console.log('Me:', me);
+    console.log('me() OK');
 
     const validate = await client.auth.validate();
-    console.log('Validate:', validate);
+    console.log('validate() OK');
 
-    const refreshed = await client.auth.refresh(login.refreshToken);
-    console.log('Refreshed:', refreshed);
+    await client.auth.refresh();
+    console.log('refresh() OK');
   } catch (error) {
     const sdkError = error as ZenitSdkError;
     console.error('Zenit SDK error:', sdkError);

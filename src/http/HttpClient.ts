@@ -9,10 +9,12 @@ export interface ZenitSdkError {
 }
 
 type TokenResolver = () => { accessToken?: string; sdkToken?: string };
+type AuthorizationHeaderResolver = () => Record<string, string>;
 
 export interface HttpClientOptions {
   baseUrl: string;
-  resolveTokens: TokenResolver;
+  resolveTokens?: TokenResolver;
+  resolveAuthorizationHeader?: AuthorizationHeaderResolver;
 }
 
 /**
@@ -25,21 +27,29 @@ export interface HttpClientOptions {
  */
 export class HttpClient {
   private readonly baseUrl: string;
-  private readonly resolveTokens: TokenResolver;
+  private readonly resolveTokens?: TokenResolver;
+  private readonly resolveAuthorizationHeader: AuthorizationHeaderResolver;
 
   constructor(options: HttpClientOptions) {
     this.baseUrl = options.baseUrl.replace(/\/$/, '');
     this.resolveTokens = options.resolveTokens;
+    this.resolveAuthorizationHeader = options.resolveAuthorizationHeader ?? (() => ({}));
   }
 
   async get<T>(path: string, options: RequestInit = {}): Promise<T> {
-    return this.request<T>(path, { ...options, method: 'GET' });
+    const headers = {
+      ...(options.headers as Record<string, string> | undefined),
+      ...this.resolveAuthorizationHeader(),
+    };
+
+    return this.request<T>(path, { ...options, method: 'GET', headers });
   }
 
   async post<T>(path: string, body?: unknown, options: RequestInit = {}): Promise<T> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string> | undefined),
+      ...this.resolveAuthorizationHeader(),
     };
 
     return this.request<T>(path, {
@@ -54,6 +64,7 @@ export class HttpClient {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string> | undefined),
+      ...this.resolveAuthorizationHeader(),
     };
 
     return this.request<T>(path, {
@@ -68,6 +79,7 @@ export class HttpClient {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string> | undefined),
+      ...this.resolveAuthorizationHeader(),
     };
 
     return this.request<T>(path, {
@@ -79,23 +91,28 @@ export class HttpClient {
   }
 
   async delete<T>(path: string, options: RequestInit = {}): Promise<T> {
-    return this.request<T>(path, { ...options, method: 'DELETE' });
+    const headers = {
+      ...(options.headers as Record<string, string> | undefined),
+      ...this.resolveAuthorizationHeader(),
+    };
+
+    return this.request<T>(path, { ...options, method: 'DELETE', headers });
   }
 
   private async request<T>(path: string, options: RequestInit): Promise<T> {
     const url = `${this.baseUrl}${path}`;
-    const tokenState = this.resolveTokens();
+    const tokenState = this.resolveTokens?.();
 
     // Usamos Record<string, string> para que TypeScript permita indexar con 'Authorization' y 'X-SDK-Token'
     const headers: Record<string, string> = {
       ...(options.headers as Record<string, string> | undefined),
     };
 
-    if (tokenState.accessToken) {
+    if (!headers['Authorization'] && tokenState?.accessToken) {
       headers['Authorization'] = `Bearer ${tokenState.accessToken}`;
     }
 
-    if (tokenState.sdkToken) {
+    if (tokenState?.sdkToken) {
       headers['X-SDK-Token'] = tokenState.sdkToken;
     }
 

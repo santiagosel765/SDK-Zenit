@@ -26,7 +26,8 @@ export class ZenitSdkAuthClient {
   async exchangeSdkToken(token?: string): Promise<SdkTokenExchangeResponse> {
     const sdkToken = token || this.config.sdkToken;
     const response = await this.http.post<SdkTokenExchangeResponse>('/sdk-auth/exchange', { token: sdkToken });
-    this.updateAccessToken(response.accessToken);
+    const accessToken = (response as any)?.accessToken ?? (response as any)?.data?.accessToken;
+    this.updateAccessToken(accessToken);
     return response;
   }
 }
